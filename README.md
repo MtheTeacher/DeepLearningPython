@@ -52,6 +52,12 @@ Need a quick classroom walkthrough?  `dlp demo` caps the run to a small number o
 dlp demo --steps 100 --batch-size 64
 ```
 
+### Windows shortcuts
+
+On Windows you can double-click the helper batch files in `scripts/windows/` to launch the Typer CLI without opening a terminal manually.  `demo.bat` starts the classroom-friendly demo (`py -m deeplearning_python.cli demo`) and `train.bat` launches the full training workflow (`py -m deeplearning_python.cli train`).
+
+These helpers rely on the Python `py` launcher that ships with the official Windows installers.  If you installed Python from the Microsoft Store or another distribution, ensure the `py` command is available on your `PATH` before using the batch files.
+
 ### Customizing the experiment
 
 Common options (see `dlp train --help` for the full list):
