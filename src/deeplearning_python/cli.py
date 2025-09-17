@@ -6,10 +6,18 @@ from pathlib import Path
 from typing import List, Optional
 
 import typer
+import click
 from rich.console import Console
+from click.core import ParameterSource
+from typer.main import TyperChoice
 
 from .data import DataConfig
-from .models import ModelConfig
+from .models import ModelConfig, SIMPLE_MLP_PRESETS
+
+
+SIMPLE_MLP_PRESET_CHOICE = TyperChoice(
+    list(SIMPLE_MLP_PRESETS.keys()), case_sensitive=False
+)
 from .training import Trainer, TrainingConfig
 
 app = typer.Typer(help="Interactive training utilities for the classroom demos.")
@@ -25,13 +33,21 @@ def train(
         "simple",
         help="Which model architecture to use (simple, regularized, conv).",
     ),
+    model_preset: str = typer.Option(
+        "baseline",
+        "--model-preset",
+        help="Preset hidden sizes and dropout for the simple MLP (only used with --model simple).",
+        case_sensitive=False,
+        click_type=SIMPLE_MLP_PRESET_CHOICE,
+    ),
     hidden_sizes: List[int] = typer.Option(
         [128, 64],
-        help="Hidden layer sizes for the simple MLP.",
+        help="Hidden layer sizes for the simple MLP (only used with --model simple). Overrides --model-preset when provided.",
         show_default=False,
     ),
-    dropout: float = typer.Option(
-        0.0, help="Dropout probability for the simple MLP (0 disables)."
+    dropout: Optional[float] = typer.Option(
+        None,
+        help="Dropout probability for the simple MLP (only used with --model simple; falls back to the preset value).",
     ),
     epochs: int = typer.Option(5, help="Number of training epochs."),
     batch_size: int = typer.Option(64, help="Mini-batch size for SGD."),
@@ -127,9 +143,18 @@ def train(
             "Detected a non-interactive output stream; disabling the live dashboard."
         )
         live_mode = False
+    preset = model_preset.lower() if model == "simple" else None
+    ctx = click.get_current_context()
+    hidden_sizes_source = ctx.get_parameter_source("hidden_sizes")
+    hidden_sizes_override = hidden_sizes_source not in (
+        ParameterSource.DEFAULT,
+        ParameterSource.DEFAULT_MAP,
+    )
+    resolved_hidden_sizes = tuple(hidden_sizes) if hidden_sizes_override else None
     model_config = ModelConfig(
         name=model,
-        hidden_sizes=tuple(hidden_sizes),
+        preset=preset,
+        hidden_sizes=resolved_hidden_sizes,
         dropout=dropout,
     )
 

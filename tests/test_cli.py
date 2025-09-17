@@ -9,6 +9,7 @@ from typer.testing import CliRunner
 pytest.importorskip("torch")
 
 from deeplearning_python.cli import app
+from deeplearning_python.models import SIMPLE_MLP_PRESETS
 
 
 runner = CliRunner()
@@ -136,3 +137,95 @@ def test_cli_disables_live_for_non_tty(tmp_path: Path, monkeypatch: pytest.Monke
     assert result.exit_code == 0, result.stdout
     assert captured["enable_live"] is False
     assert messages, "expected a notice about disabling the live dashboard"
+
+
+def test_cli_applies_model_preset(monkeypatch: pytest.MonkeyPatch) -> None:
+    from deeplearning_python import cli as cli_module
+
+    captured: dict[str, Any] = {}
+
+    class DummyTrainer:
+        def __init__(self, *, model_config, **kwargs: Any) -> None:
+            captured["hidden_sizes"] = model_config.hidden_sizes
+            captured["dropout"] = model_config.dropout
+
+        def train(self) -> None:
+            pass
+
+    monkeypatch.setattr(cli_module, "Trainer", DummyTrainer)
+
+    preset_name = "wide_dropout"
+    result = runner.invoke(
+        app,
+        [
+            "train",
+            "--epochs",
+            "1",
+            "--batch-size",
+            "4",
+            "--learning-rate",
+            "0.01",
+            "--optimizer",
+            "sgd",
+            "--device",
+            "cpu",
+            "--fake-data",
+            "--no-live",
+            "--model-preset",
+            preset_name,
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0, result.stdout
+    expected_hidden, expected_dropout = SIMPLE_MLP_PRESETS[preset_name]
+    assert captured["hidden_sizes"] == expected_hidden
+    assert captured["dropout"] == expected_dropout
+
+
+def test_cli_hidden_sizes_override_preset(monkeypatch: pytest.MonkeyPatch) -> None:
+    from deeplearning_python import cli as cli_module
+
+    captured: dict[str, Any] = {}
+
+    class DummyTrainer:
+        def __init__(self, *, model_config, **kwargs: Any) -> None:
+            captured["hidden_sizes"] = model_config.hidden_sizes
+            captured["dropout"] = model_config.dropout
+
+        def train(self) -> None:
+            pass
+
+    monkeypatch.setattr(cli_module, "Trainer", DummyTrainer)
+
+    result = runner.invoke(
+        app,
+        [
+            "train",
+            "--epochs",
+            "1",
+            "--batch-size",
+            "4",
+            "--learning-rate",
+            "0.01",
+            "--optimizer",
+            "sgd",
+            "--device",
+            "cpu",
+            "--fake-data",
+            "--no-live",
+            "--model-preset",
+            "wide_dropout",
+            "--hidden-sizes",
+            "32",
+            "--hidden-sizes",
+            "16",
+            "--dropout",
+            "0.2",
+        ],
+        catch_exceptions=False,
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert captured["hidden_sizes"] == (32, 16)
+    assert captured["dropout"] == pytest.approx(0.2)
