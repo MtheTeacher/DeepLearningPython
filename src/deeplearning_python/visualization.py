@@ -11,7 +11,11 @@ import torch
 from rich.console import Console, RenderableType
 from rich.layout import Layout
 from rich.panel import Panel
-from rich.plot import Plot
+# Rich switched the optional plotting helpers to a separate extra in newer releases.
+try:  # pragma: no cover - import may fail when the extra is missing
+    from rich.plot import Plot
+except ImportError:  # pragma: no cover
+    Plot = None  # type: ignore[assignment]
 from rich.progress import Progress
 from rich.rule import Rule
 from rich.table import Table
@@ -102,6 +106,11 @@ class TrainingDashboard:
         return Panel(table, title="Current Metrics", padding=(1, 2))
 
     def _render_loss_plot(self) -> RenderableType:
+        if Plot is None:
+            return Panel(
+                "Install `rich[plot]` to enable inline charts.", title="Loss History"
+            )
+
         plot = Plot(width=80, height=12, title="Loss History")
         if not self.history:
             plot.add_series("loss", [0.0, 0.0])
@@ -112,6 +121,12 @@ class TrainingDashboard:
         return plot
 
     def _render_accuracy_plot(self) -> RenderableType:
+        if Plot is None:
+            return Panel(
+                "Install `rich[plot]` to enable inline charts.",
+                title="Accuracy History",
+            )
+
         plot = Plot(width=80, height=12, title="Accuracy History")
         if not self.history:
             plot.add_series("accuracy", [0.0, 0.0])

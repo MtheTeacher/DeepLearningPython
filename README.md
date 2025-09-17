@@ -8,6 +8,7 @@ This repository modernizes the exercises from [*Neural Networks and Deep Learnin
 - **Live Rich dashboard** – animated loss and accuracy charts, gradient norms, step-by-step logs, and ASCII art previews of the current mini-batch so students can “see” what the network is learning.
 - **Checkpointing & metrics export** – periodic checkpoints capture the model, optimizer, and scheduler states; JSONL metrics logs can be replayed or plotted later.
 - **Typer CLI** – launch scripted runs or quick classroom demos with a single command.
+- **Colab-friendly notebook helper** – collect training metrics directly in Python with `run_notebook_training` for plotting inside Google Colab.
 
 ## Getting started
 
@@ -19,15 +20,64 @@ This repository modernizes the exercises from [*Neural Networks and Deep Learnin
    source .venv/bin/activate
    ```
 
-3. **Install dependencies**.  Choose the right PyTorch build for your hardware.  The example below installs the CPU-only wheel; replace the `pip install torch ...` command with the [CUDA-specific instructions from pytorch.org](https://pytorch.org/get-started/locally/) if you have an NVIDIA GPU.
+3. **Install dependencies**.  Choose the right PyTorch build for your hardware.
 
-   ```bash
-   pip install --upgrade pip
-   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-   pip install -e .
-   ```
+   - **CPU-only:**
+
+     ```bash
+     pip install --upgrade pip
+     pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+     pip install -e .
+     ```
+
+   - **NVIDIA RTX-5060 Ti (CUDA 12.4):** Install the up-to-date CUDA-enabled wheels directly from the PyTorch index.  Make sure your NVIDIA driver is recent enough for CUDA 12.4 (driver 550.xx or newer as reported by `nvidia-smi`).
+
+     ```bash
+     pip install --upgrade pip
+     pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+     pip install -e .
+     ```
+
+     These wheels bundle the appropriate CUDA runtime, so you do not need to install a separate CUDA toolkit for Colab or local demos.
 
    Installing the project in editable mode exposes the `dlp` command line tool described below.
+
+## Google Colab quickstart
+
+Running the project in Colab is now a first-class experience. The CLI automatically disables the Rich live dashboard when it detects a non-interactive output stream, and the package exposes a notebook helper that returns metrics directly to Python.
+
+1. Open a new Colab notebook and install the package:
+
+   ```python
+   !pip install --quiet torch torchvision
+   !pip install --quiet git+https://github.com/<REPO_OWNER>/DeepLearningPython.git
+   ```
+
+2. Import the helper and launch a short fake-data run. The helper forces `enable_live=False` and can return a pandas DataFrame when `return_dataframe=True`:
+
+   ```python
+   from pathlib import Path
+   from deeplearning_python import run_notebook_training
+
+   result = run_notebook_training(
+       epochs=1,
+       batch_size=64,
+       fake_data=True,
+       data_dir=Path("/content/data"),
+       log_dir=Path("/content/logs"),
+       checkpoint_dir=Path("/content/checkpoints"),
+       limit_train_batches=2,
+       limit_val_batches=1,
+       return_dataframe=True,
+   )
+
+   metrics_df = result["metrics"]
+   metrics_df.head()
+   ```
+
+3. Plot metrics or continue experimenting as you would locally. Metrics are written to `/content/logs`, and checkpoints land in `/content/checkpoints` by default. Mount Google Drive first if you want these artifacts to persist across sessions.
+
+The repository ships a ready-to-run example notebook at [`notebooks/colab_demo.ipynb`](notebooks/colab_demo.ipynb) that strings these steps together for your classroom or workshop.
 
 ## Live training demo
 
@@ -43,6 +93,8 @@ The trainer will:
 - display ASCII renderings of the digits in the current mini-batch together with predicted labels
 - write checkpoints to `./artifacts/checkpoints/step_XXXXXXX.pt`
 - append structured metrics to `./artifacts/logs/metrics.jsonl`
+
+When the CLI detects a non-interactive environment (such as a notebook output cell), it automatically suppresses the live Rich dashboard so the logs stay readable. Launch the command from a local terminal to re-enable the animated dashboard.
 
 ### Demo mode
 
