@@ -115,14 +115,16 @@ These helpers rely on the Python `py` launcher that ships with the official Wind
 Common options (see `dlp train --help` for the full list):
 
 - `--model`: `simple`, `regularized`, or `conv`
-- `--hidden-sizes`: adjust the layer sizes of the simple MLP (e.g. `--hidden-sizes 256 128 64`)
+- `--model-preset`: choose preset hidden sizes and dropout for the simple MLP (`baseline`, `compact`, `wide_dropout`)
+- `--hidden-sizes`: adjust the layer sizes of the simple MLP (add each value as its own flag, e.g. `--hidden-sizes 256 --hidden-sizes 128 --hidden-sizes 64`); providing this option overrides the preset
+- `--dropout`: override the preset dropout probability for the simple MLP
 - `--scheduler`: enable `steplr` or `cosine` learning rate schedules
 - `--checkpoint-interval`: how many optimizer steps to wait between checkpoints
 - `--preview-interval`: how often to refresh the mini-batch ASCII preview
 - `--mixed-precision`: turn on CUDA AMP for faster GPU demos
 - `--fake-data`: run against lightweight synthetic data when you do not have network access
 
-All options are compatible with CPU-only environments, so instructors can rehearse on a laptop before moving to the classroom GPU workstation.
+Presets provide a quick way to explore architectures without typing out every layer. For example, `--model-preset wide_dropout` configures layers `(256, 128, 64)` with dropout `0.1`. You can still tweak either parameter directly: `--hidden-sizes` changes the layer layout while keeping the preset's dropout, and `--dropout` fully replaces it. All options are compatible with CPU-only environments, so instructors can rehearse on a laptop before moving to the classroom GPU workstation.
 
 ## Checkpoints and metrics
 

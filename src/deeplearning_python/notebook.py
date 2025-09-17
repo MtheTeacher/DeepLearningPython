@@ -18,8 +18,9 @@ __all__ = ["run_notebook_training"]
 def run_notebook_training(
     *,
     model: str = "simple",
+    model_preset: str | None = "baseline",
     hidden_sizes: Iterable[int] | None = None,
-    dropout: float = 0.0,
+    dropout: float | None = None,
     epochs: int = 5,
     batch_size: int = 64,
     val_batch_size: int | None = None,
@@ -56,14 +57,20 @@ def run_notebook_training(
     """Train the classroom model from a notebook and return the collected metrics.
 
     Parameters mirror the Typer CLI defaults while forcing ``enable_live`` off so
-    notebook output remains readable. Set ``return_dataframe`` when you prefer a
-    pandas ``DataFrame`` instead of a list of ``StepMetrics`` objects.
+    notebook output remains readable. ``model_preset`` accepts the same names as
+    ``dlp train`` and can be overridden with ``hidden_sizes`` or ``dropout`` when
+    you want finer control. Set ``return_dataframe`` when you prefer a pandas
+    ``DataFrame`` instead of a list of ``StepMetrics`` objects.
     """
 
-    resolved_hidden_sizes = tuple(hidden_sizes) if hidden_sizes is not None else (128, 64)
+    resolved_hidden_sizes = tuple(hidden_sizes) if hidden_sizes is not None else None
 
+    preset = (
+        model_preset.lower() if (model == "simple" and model_preset is not None) else None
+    )
     model_config = ModelConfig(
         name=model,
+        preset=preset,
         hidden_sizes=resolved_hidden_sizes,
         dropout=dropout,
     )
