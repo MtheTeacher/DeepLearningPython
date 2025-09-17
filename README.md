@@ -20,13 +20,25 @@ This repository modernizes the exercises from [*Neural Networks and Deep Learnin
    source .venv/bin/activate
    ```
 
-3. **Install dependencies**.  Choose the right PyTorch build for your hardware.  The example below installs the CPU-only wheel; replace the `pip install torch ...` command with the [CUDA-specific instructions from pytorch.org](https://pytorch.org/get-started/locally/) if you have an NVIDIA GPU.
+3. **Install dependencies**.  Choose the right PyTorch build for your hardware.
 
-   ```bash
-   pip install --upgrade pip
-   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-   pip install -e .
-   ```
+   - **CPU-only:**
+
+     ```bash
+     pip install --upgrade pip
+     pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+     pip install -e .
+     ```
+
+   - **NVIDIA RTX-5060 Ti (CUDA 12.4):** Install the up-to-date CUDA-enabled wheels directly from the PyTorch index.  Make sure your NVIDIA driver is recent enough for CUDA 12.4 (driver 550.xx or newer as reported by `nvidia-smi`).
+
+     ```bash
+     pip install --upgrade pip
+     pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+     pip install -e .
+     ```
+
+     These wheels bundle the appropriate CUDA runtime, so you do not need to install a separate CUDA toolkit for Colab or local demos.
 
    Installing the project in editable mode exposes the `dlp` command line tool described below.
 
