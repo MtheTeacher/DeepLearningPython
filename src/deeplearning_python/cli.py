@@ -120,6 +120,13 @@ def train(
     """Train a network with a live terminal dashboard."""
 
     console = _console(verbose)
+
+    live_mode = live
+    if live_mode and not console.is_terminal:
+        console.log(
+            "Detected a non-interactive output stream; disabling the live dashboard."
+        )
+        live_mode = False
     model_config = ModelConfig(
         name=model,
         hidden_sizes=tuple(hidden_sizes),
@@ -166,7 +173,7 @@ def train(
         scheduler_gamma=scheduler_gamma,
         num_workers=num_workers,
         seed=seed,
-        enable_live=live,
+        enable_live=live_mode,
     )
 
     trainer = Trainer(
